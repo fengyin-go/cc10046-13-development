@@ -29,3 +29,14 @@ class EntryPayload(BaseModel):
 class ActionPayload(BaseModel):
     action: str
     remark: str | None = None
+    # 字段映射校对入口可能随标准动作一起提交的样本版本核验信息。
+    input_mode: str | None = None
+    trial_id: str | None = None
+    sample_id: str | None = None
+    comparison_id: str | None = None
+    diff_id: str | None = None
+    sample_version_id: str | None = None
+    input_version: str | None = None
+    input_hash: str | None = None
+    mapped_values: dict[str, Any] | None = None
+    mapping_rules: list[dict[str, Any]] | None = None

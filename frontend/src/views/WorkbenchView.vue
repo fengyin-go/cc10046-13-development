@@ -15,6 +15,14 @@
       </div>
     </header>
 
+    <TemplateDiffPanel v-if="meta.key === 'extraction_template'" />
+    <FieldProofreadPanel
+      v-else-if="meta.key === 'field_mapper'"
+      :mapping-entry-id="proofreadEntryId"
+      :mapping-name="proofreadMappingName"
+      :mapping-row="proofreadRow"
+    />
+
     <div class="stat-row">
       <article v-for="item in stats" :key="item.label" class="stat-card">
         <span class="stat-label">{{ item.label }}</span>
@@ -60,6 +68,24 @@
             >
               {{ action }}
             </button>
+            <button
+              v-if="meta.key === 'extraction_template'"
+              class="link"
+              type="button"
+              data-testid="row-template-diff-entry"
+              @click="scrollToLab('template-diff-panel')"
+            >
+              字段差异对照
+            </button>
+            <button
+              v-else-if="meta.key === 'field_mapper'"
+              class="link"
+              type="button"
+              :data-testid="`row-proofread-${row.id}`"
+              @click="openProofread(row)"
+            >
+              字段校对
+            </button>
           </td>
         </tr>
         <tr v-if="!rows.length">
@@ -94,8 +120,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 
+import FieldProofreadPanel from '@/components/FieldProofreadPanel.vue'
+import TemplateDiffPanel from '@/components/TemplateDiffPanel.vue'
 import {
   createEntry,
   downloadEntries,
@@ -115,6 +143,9 @@ const filterFields = meta.fields.slice(0, 3)
 const showCreate = ref(false)
 const creating = ref(false)
 const createValues = ref<Record<string, string>>({})
+const proofreadEntryId = ref<number | string>(1)
+const proofreadMappingName = ref('字段映射校对入口')
+const proofreadRow = ref<EntryRow | null>(null)
 const stats = computed(() => [
   { label: meta.metrics[0], value: total.value },
   { label: meta.metrics[1], value: rows.value.filter((row) => row.status === meta.statuses[1]).length },
@@ -133,6 +164,18 @@ const statusSummary = computed(() =>
 function resetFilters() {
   filters.value = {}
   void reload()
+}
+
+function scrollToLab(elementId: string) {
+  document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+async function openProofread(row: EntryRow) {
+  proofreadEntryId.value = Number(row.id)
+  proofreadMappingName.value = String(row['方案标识'] || `映射方案${row.id}`)
+  proofreadRow.value = row
+  await nextTick()
+  scrollToLab('field-proofread-panel')
 }
 
 async function exportRows() {

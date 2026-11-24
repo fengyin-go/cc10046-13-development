@@ -69,6 +69,13 @@ npm run dev
 | HTML清洗 | `html_cleaner` | 清洗模板 | 模板标识、适用站点、标签过滤 |
 | 增量同步 | `incremental_sync` | 同步水位 | 水位标识、来源配置、增量字段 |
 
+## 模板样本对照与字段校对
+
+- 「抽取模板」页提供 **模板字段差异视图 · 采样对照**：固定同一份网页原文版本，并排展示旧模板、新模板解析出的字段值，并逐项标记新增覆盖、缺失或内容变更。
+- 网页样本保留不可变版本。来源从蓝色更正为绿色后，旧对照和旧回执仍读取蓝色证据；也可「刷新并确认新原文」生成绿色新版本。
+- 在差异视图点击「确认该网页样本并送入字段映射」后，「字段映射」页的校对入口会读取该样本版本，支持试跑、提交校对、查看服务端输入摘要/映射值核验回执和历史提交记录。
+- 主要接口：`GET /api/template-lab/state`、`POST /api/template-lab/diffs`、`POST /api/template-lab/diffs/{id}/select`、`POST /api/field-mapper/trial`、`POST /api/field-mapper/proofread`。
+
 ## 约定
 
 - 全部模块共享`frontend/src/views/WorkbenchView.vue|tsx`和一套资源路由。

@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse
 
 from app.schemas import ActionPayload, ActionResult, EntryPayload, PageResult
 from app.services import service_for
+from app.services.sample_lab import SampleLabError, sample_lab
 
 router = APIRouter(prefix="/api", tags=["业务资源"])
 
@@ -94,5 +95,21 @@ def create_entry(module: str, payload: EntryPayload) -> ActionResult:
 @router.post("/{module}/{entry_id}/actions", response_model=ActionResult)
 def run_action(module: str, entry_id: int, payload: ActionPayload) -> ActionResult:
     service = require_service(module)
+
+    # 字段映射校对入口的兼容动作：保留标准“提交校验”的原始语义，
+    # 仅对显式的“字段校对/提交校对”生成样本版本核验回执。
+    if module == "field_mapper" and payload.action in {"字段校对", "提交校对"}:
+        body = payload.model_dump(exclude_none=True)
+        body["mapping_entry_id"] = entry_id
+        body.setdefault("mapping_id", f"FM-ENTRY-{entry_id}")
+        try:
+            proofread = sample_lab.submit_proofread(body)
+        except SampleLabError as exc:
+            raise HTTPException(
+                status_code=404 if "不存在" in str(exc) else 400,
+                detail=str(exc),
+            ) from exc
+        return ActionResult(ok=True, message=proofread["message"], entry=proofread)
+
     entry, message = service.run_action(entry_id, payload.action.strip())
     return ActionResult(ok=entry is not None, message=message, entry=entry)
